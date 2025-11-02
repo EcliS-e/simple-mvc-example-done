@@ -16,22 +16,26 @@ const router = (app) => {
   app.get('/page1', controllers.page1);
   app.get('/page2', controllers.page2);
   app.get('/page3', controllers.page3);
-  app.get('/getName', controllers.getName);
-  app.get('/findByName', controllers.searchName);
+  app.get('/page4', controllers.page4);
+  app.get('/getCatName', controllers.getCatName);
+  app.get('/findCatByName', controllers.searchCatName);
 
   // whenever someone goes to the site without a path (AKA the home page), call controllers.index
   // For example www.webpage.com
   app.get('/', controllers.index);
 
+  app.get('/findAndUpdateDog', controllers.findAndUpdateDog);
   // catch for any other GET request. The *wild means anything
   app.get('/*wild', controllers.notFound);
 
   // When someone POSTS to /setName, call controllers.setName
   // For example, a form submission to www.webpage.com/setName
-  app.post('/setName', controllers.setName);
+  app.post('/setCatName', controllers.setName);
 
   // When someone POSTS to /updateLast, call controllers.updateLast
-  app.post('/updateLast', controllers.updateLast);
+  app.post('/updateLastCat', controllers.updateLastCat);
+
+  app.post('/setDogName', controllers.setDogName);
 };
 
 // export the router function
