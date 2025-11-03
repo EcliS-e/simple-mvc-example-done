@@ -375,6 +375,7 @@ module.exports = {
   page3: hostPage3,
   page4: hostPage4,
   getCatName,
+  setCatName,
   setDogName,
   findAndUpdateDog,
   updateLastCat,
