@@ -1,9 +1,11 @@
 // pull in our models. This will automatically load the index.js from that folder
-const models = require('../models');
+
+const CatModel = require('../models/Cat');
+const DogModel = require('../models/Dog');
 
 // get the Cat model
-const { Cat } = models.Cat;
-const { Dog } = models.Dog;
+const { Cat } = CatModel;
+const { Dog } = DogModel;
 
 // Function to handle rendering the index page.
 const hostIndex = async (req, res) => {
@@ -101,9 +103,20 @@ const hostPage3 = (req, res) => {
   res.render('page3');
 };
 
-const hostPage4 = (req, res) => {
-  res.render('page4');
-};
+const hostPage4 = async (req, res) => {
+   try {
+    //find all dogs.
+    const docs = await Dog.find({}).lean().exec();
+
+    // Once we get back the docs array, we can send it to page4.
+    return res.render('page4', { dogs: docs });
+  } catch (err) {
+    /* If our database returns an error, or is unresponsive, we will print that error to console.
+    */
+    console.log(err);
+    return res.status(500).json({ error: 'failed to find dogs' });
+
+}};
 // Get name will return the name of the last added cat.
 const getCatName = async (req, res) => {
   try {
@@ -132,48 +145,29 @@ const getCatName = async (req, res) => {
 
 // Function to create a new dog in the database
 const setDogName = async (req, res) => {
-  /* If we look at views/page2.handlebars, the form has inputs for a firstname, lastname
-     and a number of beds. When this POST request is sent to us, the bodyParser plugin
-     we configured in app.js will store that information in req.body for us.
-  */
+
   if (!req.body.firstname || !req.body.age || !req.body.breed) {
     // If they are missing data, send back an error.
     return res.status(400).json({ error: 'firstname, age,and breed are all required' });
   }
 
-  /* If they did send all the data, we want to create a cat and add it to our database.
-     We begin by creating a cat that matches the format of our Cat schema. In this case,
-     we define a name and bedsOwned. We don't need to define the createdDate, because the
-     default Date.now function will populate that value for us later.
-  */
+  // If they did send all the data, we want to create a dog and add it to our database.
+  
   const dogData = {
     name: req.body.firstname,
     age: req.body.age,
     breed: req.body.breed,
   };
 
-  /* Once we have our cat object set up. We want to turn it into something the database
-     can understand. To do this, we create a new instance of a Cat using the Cat model
-     exported from the Models folder.
-
-     Note that this does NOT store the cat in the database. That is the next step.
-  */
+  /* Once we have our dog object set up. We want to turn it into something the database
+     can understand.*/
   const newDog = new Dog(dogData);
 
-  /* We have now setup a cat in the right format. We now want to store it in the database.
-     Again, because the database and node server are separate things entirely we have no
-     way of being sure the database will work or respond. Because of that, we wrap our code
-     in a try/catch.
-  */
+  // we wrap our code in a try/catch.
+  
   try {
-    /* newCat is a version of our catData that is database-friendly. If you print it, you will
-       see it has extra information attached to it other than name and bedsOwned. One thing it
-       now has is a .save() function. This function will intelligently add or update the cat in
-       the database. Since we have never saved this cat before, .save() will create a new cat in
-       the database. All calls to the database are async, including .save() so we will await the
-       databases response. If something goes wrong, we will end up in our catch() statement. If
-       not, we will return a 201 to the user with the cat info.
-    */
+    /* If something goes wrong, we will end up in our catch() statement. If
+       not, we will return a 201 to the user with the dog info.*/
     await newDog.save();
     return res.status(201).json({
       name: newDog.name,
@@ -182,46 +176,26 @@ const setDogName = async (req, res) => {
     });
   } catch (err) {
     /* If something goes wrong while communicating with the database, log the error and send
-       an error message back to the client. Note that our return will return us from the setName
-       function, not just the catch statement. That means we can treat the code below the catch
-       as being our "if the try worked"
-    */
+       an error message back to the client. */
     console.log(err);
     return res.status(500).json({ error: 'failed to create dog' });
   }
 };
 
 const findAndUpdateDog = async (req, res) => {
-  /* When the user makes a POST request, bodyParser populates req.body with the parameters
-     as we saw in setName() above. In the case of searchName, the user is making a GET request.
-     GET requests do not have a body, but they can have query parameters. bodyParser will also
-     handle these, and store them in req.query instead.
-
-     If the user does not give us a name to search by, throw an error.
+  /* 
+  If the user does not give us a name to search by, throw an error.
   */
   if (!req.query.name) {
     return res.status(400).json({ error: 'Name is required to perform a search' });
   }
 
-  /* If they do give us a name to search, we will as the database for a cat with that name.
-     Remember that since we are interacting with the database, we want to wrap our code in a
-     try/catch in case the database throws an error or doesn't respond.
-  */
+  // If they do give us a name to search, we will as the database for a cat with that name.
   let doc;
   try {
-    /* Just like Cat.find() in hostPage1() above, Mongoose models also have a .findOne()
-       that will find a single document in the database that matches the search parameters.
-       This function is faster, as it will stop searching after it finds one document that
-       matches the parameters. The downside is you cannot get multiple responses with it.
-
-       One of three things will occur when trying to findOne in the database.
-        1) An error will be thrown, which will stop execution of the try block and move to
-            the catch block.
-        2) Everything works, but the name was not found in the database returning an empty
-            doc object.
-        3) Everything works, and an object matching the search is found.
-    */
+ 
     doc = await Dog.findOne({ name: req.query.name }).exec();
+    
   } catch (err) {
     // If there is an error, log it and send the user an error message.
     console.log(err);
@@ -237,6 +211,7 @@ const findAndUpdateDog = async (req, res) => {
   const ageUpdated = doc.age + 1;
   return res.json({ name: doc.name, age: ageUpdated, breed: doc.breed });
 };
+
 // Function to handle searching a cat by name.
 const searchCatName = async (req, res) => {
   /* When the user makes a POST request, bodyParser populates req.body with the parameters
