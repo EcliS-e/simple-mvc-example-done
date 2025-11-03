@@ -104,8 +104,8 @@ const hostPage3 = (req, res) => {
 };
 
 const hostPage4 = async (req, res) => {
-   try {
-    //find all dogs.
+  try {
+    // find all dogs.
     const docs = await Dog.find({}).lean().exec();
 
     // Once we get back the docs array, we can send it to page4.
@@ -115,8 +115,8 @@ const hostPage4 = async (req, res) => {
     */
     console.log(err);
     return res.status(500).json({ error: 'failed to find dogs' });
-
-}};
+  }
+};
 // Get name will return the name of the last added cat.
 const getCatName = async (req, res) => {
   try {
@@ -200,16 +200,16 @@ const setCatName = async (req, res) => {
     return res.status(500).json({ error: 'failed to create cat' });
   }
 };
+
 // Function to create a new dog in the database
 const setDogName = async (req, res) => {
-
   if (!req.body.firstname || !req.body.age || !req.body.breed) {
     // If they are missing data, send back an error.
     return res.status(400).json({ error: 'firstname, age,and breed are all required' });
   }
 
   // If they did send all the data, we want to create a dog and add it to our database.
-  
+
   const dogData = {
     name: req.body.firstname,
     age: req.body.age,
@@ -217,14 +217,14 @@ const setDogName = async (req, res) => {
   };
 
   /* Once we have our dog object set up. We want to turn it into something the database
-     can understand.*/
+     can understand. */
   const newDog = new Dog(dogData);
 
   // we wrap our code in a try/catch.
-  
+
   try {
     /* If something goes wrong, we will end up in our catch() statement. If
-       not, we will return a 201 to the user with the dog info.*/
+       not, we will return a 201 to the user with the dog info. */
     await newDog.save();
     return res.status(201).json({
       name: newDog.name,
@@ -240,7 +240,7 @@ const setDogName = async (req, res) => {
 };
 
 const findAndUpdateDog = async (req, res) => {
-  /* 
+  /*
   If the user does not give us a name to search by, throw an error.
   */
   if (!req.query.name) {
@@ -250,9 +250,21 @@ const findAndUpdateDog = async (req, res) => {
   // If they do give us a name to search, we will as the database for a cat with that name.
   let doc;
   try {
- 
     doc = await Dog.findOne({ name: req.query.name }).exec();
-    
+    const updatePromise = Dog.findOneAndUpdate({ name: req.query.name }, { $inc: { age: 1 } }, { returnDocument: 'after' }).lean().exec();
+
+    updatePromise.then((update) => res.json({
+      name: update.name,
+      age: update.age,
+      breed: update.breed,
+    }));
+
+    /* If something goes wrong saving to the database,
+     log the error and send a message to the client. */
+    updatePromise.catch((err) => {
+      console.log(err);
+      return res.status(500).json({ error: 'Something went wrong' });
+    });
   } catch (err) {
     // If there is an error, log it and send the user an error message.
     console.log(err);
@@ -264,9 +276,9 @@ const findAndUpdateDog = async (req, res) => {
     return res.status(404).json({ error: 'No dogs found' });
   }
 
-  // Otherwise, we got a result and will send it back to the user.
-  const ageUpdated = doc.age + 1;
-  return res.json({ name: doc.name, age: ageUpdated, breed: doc.breed });
+  //  we got a result and will send it back to the user.
+
+  return res.json({ name: doc.name, age: doc.age, breed: doc.breed });
 };
 
 // Function to handle searching a cat by name.
