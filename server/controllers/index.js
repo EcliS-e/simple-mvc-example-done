@@ -1,11 +1,10 @@
 // pull in our models. This will automatically load the index.js from that folder
 
-const CatModel = require('../models/Cat');
-const DogModel = require('../models/Dog');
+const models = require('../models');
 
 // get the Cat model
-const { Cat } = CatModel;
-const { Dog } = DogModel;
+const { Cat, Dog } = models;
+
 
 // Function to handle rendering the index page.
 const hostIndex = async (req, res) => {
